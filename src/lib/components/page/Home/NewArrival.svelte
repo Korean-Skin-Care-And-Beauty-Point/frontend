@@ -14,6 +14,12 @@
 	];
 
 	let { products } = $props();
+
+	products
+		.then((e) => {
+			console.log(e);
+		})
+		.catch((e) => console.log(e));
 </script>
 
 <div class="mx-auto flex max-w-screen-2xl flex-col gap-6 bg-primary/10 px-10 py-10">
@@ -26,8 +32,8 @@
 				<Skeleton class="aspect-[4/4.5] h-full w-full bg-gray-50" />
 			{/each}
 		{:then product}
-			{#if product?.data?.length > 0}
-				{#each product?.data as newArrival}
+			{#if product?.newArrival?.product?.length > 0}
+				{#each product?.newArrival?.product as newArrival}
 					<ProductCard
 						imgUrl={newArrival?.image}
 						productPrice={newArrival?.price}

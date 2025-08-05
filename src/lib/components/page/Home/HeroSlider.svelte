@@ -22,12 +22,12 @@
 		{#await bannerImage}
 			<Skeleton class="aspect-[16/6] h-full w-full rounded-xl bg-gray-200" />
 		{:then banners}
-			{#if banners?.banner.length > 0}
-				{#each banners?.banner as banner (banner.id)}
+			{#if banners?.banners?.length > 0}
+				{#each banners?.banners as banner (banner.id)}
 					<div class="swiper-slide !w-full">
-						<a href="/category/{banner?.categoryId}/{banner?.category?.title}">
+						<a href="/category/{banner?.category?.id}/{banner?.category?.slug}">
 							<img
-								src={banner?.bannerImage}
+								src={banner?.image}
 								alt="Slider"
 								class="aspect-[16/6] h-full !w-full rounded-xl object-cover object-center max-sm:aspect-video"
 							/>

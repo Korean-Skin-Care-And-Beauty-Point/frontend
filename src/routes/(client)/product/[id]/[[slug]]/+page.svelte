@@ -36,7 +36,7 @@
 				// discountPrice =
 				// 	e?.product?.price - (e?.product?.discount?.discountValue / 100) * e?.product?.price;
 
-				discount = e?.product?.discount?.discountValue > 0 ? true : false;
+				discount = e?.product?.discount?.discount_amount > 0 ? true : false;
 				console.log(e);
 			})
 			.catch((err) => {
@@ -67,6 +67,18 @@
 			// toast.error(form?.message);
 		}
 	});
+
+	function formatRelativeTime(isoDate: string | number | Date) {
+		const now = new Date();
+		const date = new Date(isoDate);
+		const diffInDays = Math.round((date - now) / (1000 * 60 * 60 * 24));
+
+		if (diffInDays === 0) return 'today';
+		if (diffInDays === 1) return 'tomorrow';
+		if (diffInDays === -1) return 'yesterday';
+		if (diffInDays > 0) return `in ${diffInDays} days`;
+		return `${Math.abs(diffInDays)} days ago`;
+	}
 </script>
 
 <div class="mx-auto flex w-full max-w-screen-2xl flex-col gap-12 px-12 pt-4 max-md:px-2">
@@ -91,11 +103,11 @@
 					{#await data?.product}
 						<Skeleton class="aspect-[4/4] !h-full !w-full rounded-xl bg-gray-200" />
 					{:then productImage}
-						{#if productImage?.product?.productImages[0]?.image?.length > 0}
-							{#each productImage?.product?.productImages[0]?.image as image}
+						{#if productImage?.product?.gallery?.length > 0}
+							{#each productImage?.product?.gallery as image}
 								<div class="swiper-slide !w-full">
 									<img
-										src={`${image}`}
+										src={`${image?.img_file}`}
 										alt="Slider"
 										class="aspect-[4/4] h-full !w-full rounded-xl object-contain object-center max-sm:aspect-video"
 									/>
@@ -132,11 +144,11 @@
 							<Skeleton class="aspect-[4/4] h-full w-full rounded-xl bg-gray-200" />
 						{/each}
 					{:then productImage}
-						{#if productImage?.product?.productImages[0]?.image?.length > 0}
-							{#each productImage?.product?.productImages[0]?.image as image}
+						{#if productImage?.product?.gallery?.length > 0}
+							{#each productImage?.product?.gallery as image}
 								<div class="swiper-slide !h-auto !w-full cursor-pointer">
 									<img
-										src={`${image}`}
+										src={`${image?.img_file}`}
 										alt="Slider"
 										class="aspect-[4/4] h-auto w-full rounded-xl object-contain object-center max-sm:aspect-video"
 									/>
@@ -153,10 +165,10 @@
 		</div>
 		<div class="flex flex-col gap-4">
 			{#await data?.product}
-				<Skeleton class="aspect-[4/4] h-full w-full rounded-xl bg-gray-200" />
+				<Skeleton class="aspect-[4/4] h-16 w-full rounded-xl bg-gray-200" />
 			{:then product}
 				<div>
-					{#if product?.product?.pickedByCelebrities.length > 0}
+					<!-- {#if product?.product?.pickedByCelebrities.length > 0}
 						<div class="mb-4 flex w-full items-center gap-2">
 							<p class="text-nowrap">Picked by:</p>
 							{#each product?.product?.pickedByCelebrities as celebrity}
@@ -177,13 +189,13 @@
 								</div>
 							{/each}
 						</div>
-					{/if}
+					{/if} -->
 					<div class="flex flex-col gap-1">
 						<p class="line-clamp-2 text-2xl font-semibold tracking-tight">
 							{product?.product?.name}
 						</p>
 						<div class="flex items-start gap-2">
-							<SvelteRating rating={+product?.product?.averageReview} config={{ size: 16 }} />
+							<SvelteRating rating={product?.product?.averageRating || 0} config={{ size: 16 }} />
 							<p class="text-sm text-gray-400">
 								{product?.product?.totalReviewCount}
 								{#if product?.product?.totalReviewCount > 0}
@@ -197,19 +209,19 @@
 
 					<div class="mt-4 flex items-center gap-3 max-md:flex-col max-md:items-start">
 						<p class="text-2xl font-semibold tracking-tight text-primary max-md:text-xl">
-							{price.format(product?.product?.price).replace('NPR', 'Rs.')}
+							{price.format(product?.product?.final_price).replace('NPR', 'Rs.')}
 						</p>
 						{#if discount}
 							<div class="flex items-center gap-2">
 								<p
 									class="text-xl font-medium tracking-tight text-red-200 line-through max-md:text-lg"
 								>
-									{price.format(product?.product?.discount?.originalPrice).replace('NPR', 'Rs.')}
+									{price.format(product?.product?.discount?.original_price).replace('NPR', 'Rs.')}
 								</p>
 								<p
 									class="rounded-md bg-primary px-2 py-0.5 text-sm font-semibold text-white max-md:text-xs"
 								>
-									{product?.product?.discount?.discountValue}% OFF
+									{product?.product?.discount?.discount_amount}% OFF
 								</p>
 							</div>
 						{/if}
@@ -225,23 +237,27 @@
 								<Skeleton class="h-8 w-full bg-gray-100" />
 							</div>
 						{:then products}
-							{#if products?.product.attributes || products?.product.attributes > 0}
+							{#if products?.product.attributes || products?.product.attributes.length > 0}
 								{#each products?.product.attributes as attribute}
 									<div class="flex w-full flex-col gap-1">
 										<p class="text-xl font-semibold text-black max-sm:text-base">
-											{attribute.title}:
+											{attribute.attribute}:
 										</p>
 
 										<div class="flex w-full gap-2">
-											{#each attribute.value as value}
-												<label for={value} class="group flex w-full cursor-pointer">
+											{#each attribute.values as value}
+												<label for={value?.value} class="group flex w-full cursor-pointer">
 													<input
 														type="radio"
-														name={attribute.title}
-														id={value}
+														name={attribute.attribute}
+														id={value?.value}
 														{value}
 														class="peer invisible absolute"
-														onchange={() => updateSelectedAttribute(attribute.title, value)}
+														onchange={() =>
+															updateSelectedAttribute(
+																attribute.attribute_id,
+																value?.attribute_value_id
+															)}
 													/>
 													<div
 														class="w-full rounded-md border border-zinc-300 px-1.5 py-2 text-center text-sm font-semibold peer-checked:border-0
@@ -250,7 +266,7 @@
 															peer-checked:outline-primary
 															"
 													>
-														{value}
+														{value?.value}
 													</div>
 												</label>
 											{/each}
@@ -374,15 +390,15 @@
 			<div class="col-span-2 flex flex-col gap-2">
 				<p class="text-xl font-semibold">Customer Reviews</p>
 				<div class="flex flex-col gap-2">
-					<div class="flex items-center gap-2">
-						<SvelteRating rating={+product?.product?.averageReview} config={{ size: 16 }} />
-						<p>{product?.product?.averageReview} out of 5</p>
-					</div>
+					<!-- <div class="flex items-center gap-2">
+						<SvelteRating rating={+product?.product?.averageRating} config={{ size: 16 }} />
+						<p>{product?.product?.averageRating} out of 5</p>
+					</div> -->
 
-					<div class="flex flex-col gap-1">
-						{#each product?.product?.reviewStats as stats}
+					<!-- <div class="flex flex-col gap-1">
+						{#each product?.product?.rating as stats}
 							<div class="flex items-center gap-2">
-								<SvelteRating rating={stats?.star} config={{ size: 16 }} />
+								<SvelteRating rating={+stats?.rating} config={{ size: 16 }} />
 								<div class="relative h-4 w-32 overflow-hidden rounded-sm bg-slate-200">
 									<div
 										class="absolute h-full rounded-sm bg-primary"
@@ -392,23 +408,23 @@
 								<p class="text-sm">{stats?.count}</p>
 							</div>
 						{/each}
-					</div>
+					</div> -->
 				</div>
 			</div>
 			<div class="col-span-6 flex flex-col gap-6">
 				<p class="text-xl font-semibold">Reviews</p>
 				<div class="flex flex-col gap-6">
-					{#if product?.product?.ProductReview.length > 0}
-						{#each product?.product?.ProductReview.slice(0, 4) as review}
+					{#if product?.product?.rating.length > 0}
+						{#each product?.product?.rating.slice(0, 4) as review}
 							<div class="flex w-full gap-4">
 								<div class="flex w-full flex-col gap-4">
 									<div class="flex items-start justify-between text-sm">
 										<div>
-											<p class="text-lg font-semibold">{review.user.fullName}</p>
-											<SvelteRating rating={review.rating} config={{ size: 16 }} />
+											<p class="text-lg font-semibold">{review.user.name}</p>
+											<SvelteRating rating={+review.rating} config={{ size: 16 }} />
 										</div>
 										<div>
-											<p>Just Now</p>
+											<p>{formatRelativeTime(review.updated_at)}</p>
 										</div>
 									</div>
 									<p>
@@ -426,21 +442,26 @@
 			</div>
 		{/await}
 	</div>
-	<!-- <div class="mb-8 flex flex-col gap-6">
-		<p class="mt-4 text-2xl font-bold tracking-tight">Related Products</p>
-		<div class="grid grid-cols-5 gap-4 max-sm:grid-cols-2">
-			{#each Array.from({ length: 10 })}
-				<ProductCard
-					imgUrl={malika}
-					productPrice={2500}
-					productTitle={'Sunscreen PFS++++'}
-					rating={2}
-					discount={0}
-					productRedirectLink={`/product/1/sunscreen`}
-				/>
-			{/each}
+	{#await data?.product}
+		<Skeleton class="aspect-[4/4] h-full w-full rounded-xl bg-gray-200" />
+	{:then product}
+		<div class="mb-8 flex flex-col gap-6">
+			<p class="mt-4 text-2xl font-bold tracking-tight">Related Products</p>
+			<div class="grid grid-cols-5 gap-4 max-sm:grid-cols-2">
+				{#each product.related_products as related}
+					<ProductCard
+						imgUrl={related.image}
+						productPrice={related.final_price}
+						productTitle={related.name}
+						rating={related.averageRating}
+						totalReviewCount={related.totalReviewCount}
+						discount={related.discount}
+						productRedirectLink={`/product/${related.id}/${related.slug}`}
+					/>
+				{/each}
+			</div>
 		</div>
-	</div> -->
+	{/await}
 </div>
 
 <style>

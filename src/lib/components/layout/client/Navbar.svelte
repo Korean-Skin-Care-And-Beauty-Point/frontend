@@ -40,6 +40,8 @@
 	let triggerRef = $state<HTMLButtonElement>(null!);
 	let searchInputText = $state('');
 
+	// category.then((e) => console.log(e)).catch((e) => console.log(e));
+
 	const selectedValue = $derived(languages.find((f) => f.value === value)?.label);
 	function closeAndFocusTrigger() {
 		open = false;
@@ -186,9 +188,9 @@
 					<DropdownMenu.Root>
 						<DropdownMenu.Trigger>
 							<div class="flex flex-col items-center">
-								{#if user?.user?.avatar}
+								{#if user?.user?.profileImage}
 									<img
-										src={user?.user?.avatar}
+										src={user?.user?.profileImage}
 										alt="{user?.user?.name} avatar"
 										class="aspect-square h-7 w-7 rounded-full object-cover object-center"
 									/>
@@ -239,7 +241,7 @@
 			>
 		</div>
 	</div>
-	<div
+	<!-- <div
 		class="mx-auto max-w-screen-2xl border-b border-gray-200 px-10 py-2 max-sm:hidden max-xs:px-4"
 	>
 		<div class="flex items-center gap-2 text-sm">
@@ -251,7 +253,7 @@
 				>
 					<div class="flex gap-4">
 						{#await category then categoryItem}
-							{#each categoryItem?.category as item}
+							{#each categoryItem?.categories as item}
 								<a href="/category/{item?.id}/{item?.slug}" class="text-nowrap">{item?.title}</a>
 							{/each}
 						{/await}
@@ -262,5 +264,5 @@
 				></div>
 			</div>
 		</div>
-	</div>
+	</div> -->
 </nav>

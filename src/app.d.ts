@@ -5,15 +5,18 @@ declare global {
 		interface Env {
 			VITE_BACKEND_URL: string;
 			VITE_BACKEND_BASE_URL: string;
+			// VITE_PUBLIC_BACKEND_URL: string;
 		}
+		// interface PublicEnv {
+		// }
 		// interface Error {}
 		interface Locals {
 			authenticated: boolean;
 			user: {
-				name: string,
-				role: string,
+				name: string;
+				role: string;
 				avatar: string;
-			};
+			} | null;
 		}
 		// interface PageData {}
 		// interface PageState {}
@@ -21,4 +24,4 @@ declare global {
 	}
 }
 
-export { };
+export {};

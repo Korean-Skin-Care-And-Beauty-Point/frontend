@@ -33,6 +33,7 @@
 	});
 
 	let value = $state<DateValue | undefined>();
+	let genderValue = $state<string | undefined>();
 	let placeholder = $state<DateValue>();
 
 	let contentRef = $state<HTMLElement | null>(null);
@@ -57,7 +58,7 @@
 	let { data } = $props();
 
 	formData.set({
-		fullName: '',
+		name: '',
 		email: '',
 		phoneNumber: '',
 		dob: '',
@@ -71,21 +72,22 @@
 		// $formData.dob = value?.toString();
 		data?.profile
 			?.then((e) => {
-				// console.log(e);
-				initialProfile = structuredClone(e?.profile);
+				console.log(e);
+				initialProfile = structuredClone(e?.user);
 				formData.set({
-					...e?.profile
+					...e?.user
 				});
 
 				if (value) {
 					$formData.dob = value.toString();
 					isFormDirty = checkFormChanges();
 				}
-				if (e?.profile?.gender) {
-					selectedGender = e.profile.gender;
+				if (e?.user?.gender) {
+					selectedGender = e.user.gender.toLowerCase();
+					$formData.gender = e.user.gender;
 				}
-				if (e?.profile?.dob) {
-					const date = new Date(e.profile.dob);
+				if (e?.user?.dob) {
+					const date = new Date(e.user.dob);
 					const year = date.getFullYear();
 					const month = date.getMonth() + 1;
 					const day = date.getDate();
@@ -104,12 +106,25 @@
 	function checkFormChanges() {
 		if (!initialProfile) return false;
 		const currentForm = get(formData);
+		const currentDob = value?.toString();
+
+		const initialDob = initialProfile.dob
+			? new CalendarDate(
+					new Date(initialProfile.dob).getFullYear(),
+					new Date(initialProfile.dob).getMonth() + 1,
+					new Date(initialProfile.dob).getDate()
+				).toString()
+			: '';
+
+		const currentGender = currentForm.gender?.toLowerCase();
+		const initialGender = initialProfile.gender?.toLowerCase();
+
 		return (
-			currentForm.fullName !== initialProfile.fullName ||
+			currentForm.name !== initialProfile.name ||
 			currentForm.email !== initialProfile.email ||
 			currentForm.phoneNumber !== initialProfile.phoneNumber ||
-			currentForm.dob !== initialProfile.dob ||
-			currentForm.gender !== initialProfile.gender ||
+			currentDob !== initialDob ||
+			currentGender !== initialGender ||
 			currentForm.address !== initialProfile.address ||
 			currentForm.description !== initialProfile.description ||
 			profileImageFile !== null
@@ -135,6 +150,16 @@
 			label: monthFmt.format(month.toDate(getLocalTimeZone()))
 		};
 	});
+
+	const genders = [
+		{ value: 'male', label: 'Male' },
+		{ value: 'female', label: 'Female' },
+		{ value: 'other', label: 'Others' }
+	];
+
+	const genderTrigger = $derived(
+		genders.find((f) => f.value === genderValue)?.label ?? 'Select a gender'
+	);
 
 	const yearOptions = Array.from({ length: 100 }, (_, i) => ({
 		label: String(new Date().getFullYear() - i),
@@ -172,6 +197,14 @@
 					return async ({ result }) => {
 						if (result.status) {
 							toast.success('Saved!');
+							isFormDirty = false;
+							initialProfile = structuredClone(get(formData));
+							profileImageFile = null;
+							genderValue = initialProfile.gender?.toLowerCase();
+							if (profileImagePreview) {
+								URL.revokeObjectURL(profileImagePreview);
+								profileImagePreview = null;
+							}
 							await invalidateAll();
 						} else {
 							toast.error('Failed to save.');
@@ -193,7 +226,7 @@
 				{:then profile}
 					<!-- <label for="profileImage">ProfileImage</label> -->
 					<div class="flex items-center gap-4">
-						{#if profile?.profile?.profileImage}
+						{#if profile?.user?.profileImage}
 							<label
 								for="profileImage"
 								class="group/item relative overflow-clip rounded-full hover:cursor-pointer"
@@ -204,9 +237,9 @@
 										alt="Preview"
 										class="aspect-square h-full w-20 rounded-full"
 									/>
-								{:else if profile?.profile?.profileImage}
+								{:else if profile?.user?.profileImage}
 									<img
-										src={profile?.profile?.profileImage}
+										src={profile?.user?.profileImage}
 										alt="Avatar"
 										class="aspect-square h-full w-20 rounded-full"
 									/>
@@ -246,9 +279,9 @@
 										alt="Preview"
 										class="aspect-square h-full w-20 rounded-full"
 									/>
-								{:else if profile?.profile?.fullName}
+								{:else if profile?.user?.name}
 									<p class="flex h-20 w-20 items-center justify-center rounded-full bg-slate-200">
-										{profile?.profile?.fullName.slice(0, 1)}
+										{profile?.user?.name.slice(0, 1)}
 									</p>
 								{/if}
 								<div
@@ -271,16 +304,16 @@
 							/>
 						{/if}
 						<div>
-							<p class="text-2xl font-semibold">{profile?.profile?.fullName}</p>
+							<p class="text-2xl font-semibold">{profile?.user?.name}</p>
 							<div class="flex gap-2">
 								<div class="flex items-center gap-1.5">
 									<Mail size={16} color="#6b7280" strokeWidth={1.5} />
-									<p class="text-sm text-gray-500">{profile?.profile?.email}</p>
+									<p class="text-sm text-gray-500">{profile?.user?.email}</p>
 								</div>
 								<p class="text-sm text-gray-500">|</p>
 								<div class="flex items-center gap-1.5">
 									<Phone size={16} color="#6b7280" strokeWidth={1.5} />
-									<p class="text-sm text-gray-500">(+977) {profile?.profile?.phoneNumber}</p>
+									<p class="text-sm text-gray-500">(+977) {profile?.user?.phoneNumber}</p>
 								</div>
 							</div>
 						</div>
@@ -294,7 +327,7 @@
 								placeholder="Write something about you..."
 								bind:value={$formData.description}
 								oninput={() => (isFormDirty = checkFormChanges())}
-								>{profile?.profile?.description}</textarea
+								>{profile?.user?.description}</textarea
 							>
 						</div>
 					{/if}
@@ -322,8 +355,8 @@
 											type="text"
 											id="fullName"
 											class="w-full text-sm tracking-tight focus-visible:outline-none focus-visible:ring-0 max-sm:py-2 max-xs:text-xs"
-											name="fullName"
-											bind:value={$formData.fullName}
+											name="name"
+											bind:value={$formData.name}
 										/>
 									</div>
 								</div>
@@ -381,6 +414,11 @@
 												class={cn('rounded-md border p-3')}
 												bind:value
 												bind:placeholder
+												onValueChange={(e) => {
+													value = e;
+													// $formData.dob = value?.toString();
+													isFormDirty = checkFormChanges();
+												}}
 											>
 												{#snippet children({ months, weekdays })}
 													<Calendar.Header class="flex w-full items-center justify-between gap-2">
@@ -391,6 +429,7 @@
 																if (!placeholder) return;
 																if (v === `${placeholder.month}`) return;
 																placeholder = placeholder.set({ month: Number.parseInt(v) });
+																isFormDirty = checkFormChanges();
 															}}
 														>
 															<Select.Trigger aria-label="Select month" class="w-[60%]">
@@ -409,6 +448,7 @@
 																if (!v || !placeholder) return;
 																if (v === `${placeholder?.year}`) return;
 																placeholder = placeholder.set({ year: Number.parseInt(v) });
+																isFormDirty = checkFormChanges();
 															}}
 														>
 															<Select.Trigger aria-label="Select year" class="w-[40%]">
@@ -459,7 +499,25 @@
 
 								<div class="flex w-full flex-col items-start gap-1.5">
 									<Label for="phoneNumber">Gender</Label>
-									<DropdownMenu.Root>
+									<Select.Root
+										type="single"
+										name="gender"
+										bind:value={genderValue}
+										allowDeselect={false}
+										onValueChange={(e) => {
+											$formData.gender = e;
+											genderValue = e;
+											isFormDirty = checkFormChanges();
+										}}
+									>
+										<Select.Trigger class="w-full">{genderTrigger}</Select.Trigger>
+										<Select.Content>
+											{#each genders as gender}
+												<Select.Item value={gender.value}>{gender.label}</Select.Item>
+											{/each}
+										</Select.Content>
+									</Select.Root>
+									<!-- <DropdownMenu.Root>
 										<DropdownMenu.Trigger
 											class="w-full items-start rounded-md  border-2 border-gray-200 px-4 py-1.5 text-start capitalize focus-within:border-primary"
 											>{selectedGender.toLowerCase() || 'Select a gender'}</DropdownMenu.Trigger
@@ -477,8 +535,7 @@
 												>
 											</DropdownMenu.Group>
 										</DropdownMenu.Content>
-									</DropdownMenu.Root>
-									<input type="hidden" name="gender" bind:value={$formData.gender} />
+									</DropdownMenu.Root> -->
 								</div>
 
 								<div class="flex w-full flex-col items-start gap-1.5">

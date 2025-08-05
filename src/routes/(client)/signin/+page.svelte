@@ -1,25 +1,33 @@
-<script>
+<script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { pageTitle } from '$lib/store/pageTitle.svelte';
+	import GoogleLogo from '$lib/assets/img/Google_Favicon_2025.svg';
 	$pageTitle.title = 'Sign In';
 
 	import Eye from 'lucide-svelte/icons/eye';
 	import EyeClosed from 'lucide-svelte/icons/eye-closed';
 	import { toast } from 'svelte-sonner';
+	import { PUBLIC_BACKEND_URL } from '$env/static/public';
+	import { endpoints } from '$lib/utils/api.js';
 	let hidePassword = $state(true);
 	let isLoading = $state(false);
 
 	let { form } = $props();
 
+	console.log(form);
+
 	$effect(() => {
 		if (form?.status === 'success') {
 			isLoading = false;
 			toast.success(form?.message);
+			goto('/');
 		} else if (form?.status === 'error') {
 			isLoading = false;
 			toast.error(form?.message);
+			goto('/signin');
 		}
 	});
 </script>
@@ -95,6 +103,19 @@
 			<hr class="w-full" />
 			<p class="text-nowrap text-sm text-gray-400">Or Continue with</p>
 			<hr class="w-full" />
+		</div>
+		<div>
+			<Button
+				type={'button'}
+				variant={'outline'}
+				class="w-full"
+				onclick={(e) => {
+					window.location.href = `${PUBLIC_BACKEND_URL}${endpoints.auth.googleCallback}`;
+				}}
+			>
+				<img src={GoogleLogo} alt="Google Login" class="aspect-square w-4" />
+				<p>Continue with Google</p>
+			</Button>
 		</div>
 	</form>
 

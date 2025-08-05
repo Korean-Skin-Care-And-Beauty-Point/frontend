@@ -9,11 +9,12 @@
 	import { Trash } from 'lucide-svelte';
 	import { ProductCard } from '$lib/components/ui/product-card/index.js';
 	import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
+	import Pencil from 'lucide-svelte/icons/pencil';
 	import QuantityCounter from '$lib/components/Extra/QuantityCounter.svelte';
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
 	import { checkoutData } from '$lib/store/checkout.svelte.js';
-	import { goto } from '$app/navigation';
+	import { afterNavigate, goto, invalidate, invalidateAll } from '$app/navigation';
 
 	$pageTitle.title = 'Cart';
 
@@ -32,48 +33,79 @@
 
 	let { data, form } = $props();
 
+	// data.cart?.then((e) => console.log(e)).catch((e) => console.log(e));
+
 	const price = new Intl.NumberFormat('en-US', {
 		style: 'currency',
 		currency: 'NPR'
 	});
 
-	function calculateTotalDiscount() {
-		return selected.reduce((total: number, item: any) => {
-			if (item.product.discount > 0) {
-				const discountAmount = (item.product.discount / 100) * item.product.price;
-				return total + discountAmount * item.quantity;
-			}
-			return total;
-		}, 0);
-	}
+	function updateTotals() {
+		if (selected.length === 0) {
+			totalDiscount = 0;
+			subTotal = 0;
+			totalPrice = 0;
+		} else {
+			totalDiscount = selected.reduce(
+				(
+					total: number,
+					item: { discounts: string | any[]; product_price: number; quantity: number }
+				) => {
+					if (item.discounts?.length > 0) {
+						const discount = item.discounts[0];
+						const discountAmount = (discount.discount_amount / 100) * item.product_price;
+						return total + discountAmount * item.quantity;
+					}
+					return total;
+				},
+				0
+			);
 
-	function calculateSubtotal() {
-		return selected.reduce((total: number, item: any) => {
-			return total + item.product.price * item.quantity;
-		}, 0);
-	}
+			subTotal = selected.reduce(
+				(
+					total: number,
+					item: { product_price: number; quantity: number; discounts: string | any[] }
+				) => {
+					const basePrice = item.product_price * item.quantity;
+					if (item.discounts?.length > 0) {
+						const discount = item.discounts[0];
+						return (
+							total + item.product_price * (1 - discount.discount_amount / 100) * item.quantity
+						);
+					}
+					return total + basePrice;
+				},
+				0
+			);
 
-	$effect(() => {
-		totalDiscount = calculateTotalDiscount();
-		subTotal = calculateSubtotal() - calculateTotalDiscount();
-		totalPrice = subTotal + shippingFee - voucher;
-	});
+			totalPrice = subTotal + shippingFee - voucher;
+		}
+	}
 
 	$effect(() => {
 		data?.cart
 			?.then((e) => {
 				console.log(e);
-				products = e.product;
+				products = e.cart.items;
 				selected = [];
-				totalProduct = e.product.length;
-				deleteSelected = [...e.product];
+				totalProduct = e.cart.items.length;
+				deleteSelected = [...e.cart.items];
 
-				discount = e.product.some(
-					(item: { product: { discount: number } }) => item.product.discount > 0
-				);
+				discount = e.product.some((item: { discounts: Array<any> }) => item.discounts.length > 0);
+				updateTotals();
 			})
 			.catch((e) => console.log(e));
 
+		// if (form?.status === 'success') {
+		// 	toast.success(form?.message);
+		// 	// invalidateAll();
+		// 	invalidate('/cart');
+		// } else if (form?.status === 'error') {
+		// 	toast.error(form?.message);
+		// }
+	});
+
+	afterNavigate(({ from, to }) => {
 		if (form?.status === 'success') {
 			toast.success(form?.message);
 		} else if (form?.status === 'error') {
@@ -87,6 +119,7 @@
 		} else {
 			selected = [];
 		}
+		updateTotals();
 	}
 
 	function toggleItem(item: any) {
@@ -95,6 +128,7 @@
 		} else {
 			selected = [...selected, item];
 		}
+		updateTotals();
 	}
 	function isAllSelected() {
 		return selected.length === products.length && products.length > 0;
@@ -128,9 +162,13 @@
 					</div>
 					<form method="POST" use:enhance action="?/deleteProducts">
 						{#each deleteSelected as item}
-							<input type="hidden" name="productId[]" value={item.product.id} />
+							<input type="hidden" name="cartItemsIds[]" value={item.id} />
 						{/each}
-						<button class="flex cursor-pointer items-center gap-1" disabled={selected.length === 0}>
+						<button
+							class="flex cursor-pointer items-center gap-1"
+							disabled={selected.length === 0}
+							type="submit"
+						>
 							<Trash size={18} strokeWidth={1.5} />
 							<Label for="deleteAll" class="cursor-pointer font-normal">Delete All</Label>
 						</button>
@@ -146,9 +184,9 @@
 						</div>
 					{:then cartProduct}
 						{#if cartProduct}
-							{#if cartProduct.product.length > 0}
+							{#if cartProduct.cart.items.length > 0}
 								<div class="flex flex-col gap-2">
-									{#each cartProduct.product as cart, index}
+									{#each cartProduct.cart.items as cart, index}
 										<div
 											class="flex w-full justify-between border-b px-4 py-4 last:border-b-0 max-md:flex-col max-md:px-3 max-md:py-4"
 										>
@@ -164,23 +202,24 @@
 												>
 													<div>
 														<img
-															src={cart?.product?.image}
-															alt={cart?.product?.name}
+															src={cart?.product_image}
+															alt={cart?.product_name}
 															class="aspect-square h-full w-28 rounded-md object-contain object-center"
 														/>
 													</div>
 													<div class="flex w-full flex-col justify-between">
 														<div class="flex flex-col gap-0 max-md:gap-0">
 															<a
-																href="/product/{cart?.product?.id}/{cart?.product?.slug}"
+																href="/product/{cart?.product_id}/{cart?.product_slug}"
 																class="line-clamp-2 text-lg font-semibold max-md:text-sm"
 															>
-																{cart?.product?.name}
+																{cart?.product_name}
 															</a>
 															<div class="flex items-center gap-1.5">
-																{#each JSON.parse(cart?.attributes) as attribute}
+																{#each cart?.attributes as attribute}
 																	<p class="text-sm font-normal text-gray-400">
-																		{attribute.title} <span>:</span> <span>{attribute.value}</span>
+																		{attribute.attribute_name} <span>:</span>
+																		<span>{attribute.attribute_value}</span>
 																	</p>
 																{/each}
 																<!--<div class="max-md:hidden">
@@ -213,24 +252,25 @@
 															>
 																{price
 																	.format(
-																		discount
-																			? cart?.product?.price -
-																					(cart?.product?.discount / 100) * cart?.product?.price
-																			: cart?.product?.price
+																		cart.discounts?.length > 0
+																			? cart.product_price -
+																					(cart.discounts[0].discount_amount / 100) *
+																						cart.product_price
+																			: cart.product_price
 																	)
 																	.replace('NPR', 'Rs.')}
 															</p>
-															{#if discount}
+															{#if cart.discounts?.length > 0}
 																<div class="flex items-center gap-2">
 																	<p
 																		class="text-lg font-medium tracking-tight text-red-200 line-through max-md:text-lg"
 																	>
-																		{price.format(cart?.product?.price).replace('NPR', 'Rs.')}
+																		{price.format(cart?.product_price).replace('NPR', 'Rs.')}
 																	</p>
 																	<p
 																		class="rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-white max-md:text-xs"
 																	>
-																		{cart?.product?.discount}% OFF
+																		{cart.discounts[0].discount_amount}% OFF
 																	</p>
 																</div>
 															{/if}
@@ -266,7 +306,7 @@
 												</AlertDialog.Root>
 
 												<div>
-													<QuantityCounter quantity={cart?.quantity ?? 1} />
+													<QuantityCounter bind:quantity={cart.quantity} />
 												</div>
 											</div>
 										</div>
@@ -287,10 +327,21 @@
 			class="col-span-2 h-fit rounded-md border border-gray-300 max-lg:col-span-3 max-md:col-span-full"
 		>
 			<form class="flex flex-col gap-3 p-4">
-				<div>
-					<p class="text-sm text-gray-400">Location</p>
-					<p class="text-lg font-semibold">City Center, Kathmandu, Nepal</p>
-				</div>
+				{#await data?.cart}
+					<p>Loading...</p>
+				{:then cart}
+					<div>
+						<p class="text-sm text-gray-400">Location</p>
+						{#if cart?.address && cart?.province}
+							<p class="text-lg font-semibold">{cart?.address}, {cart?.province}</p>
+						{:else}
+							<a href="/me/profile" class="flex items-center gap-1"
+								><Pencil size={16} /> Set Location
+							</a>
+						{/if}
+					</div>
+				{/await}
+
 				<hr />
 				<div class="flex flex-col gap-2">
 					<p class="text-lg font-semibold">Order Summary</p>

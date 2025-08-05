@@ -1,288 +1,166 @@
-import { VITE_BACKEND_URL } from "$env/static/private";
-import { redirect, type Handle, type HandleFetch } from "@sveltejs/kit";
-import { jwtDecode } from "jwt-decode";
-
+import { VITE_BACKEND_URL } from '$env/static/private';
+import { endpoints } from '$lib/utils/api';
+import { redirect, type Handle, type HandleFetch } from '@sveltejs/kit';
+import { jwtDecode } from 'jwt-decode';
 
 export const handleFetch: HandleFetch = async ({ request, fetch, event }) => {
-    let newRequest = request;
+	let newRequest = request;
 
-    const accessToken = event.cookies.get("accessToken");
-    if (accessToken) {
-        newRequest = new Request(request, {
-            headers: {
-                ...request.headers,
-                Authorization: `Bearer ${accessToken}`,
-            }
-        });
-    }
+	const accessToken = event.cookies.get('accessToken');
+	if (accessToken) {
+		newRequest = new Request(request, {
+			headers: {
+				...request.headers,
+				Authorization: `Bearer ${accessToken}`
+			}
+		});
+	}
 
-    let response = await fetch(newRequest);
-    if (response.status === 401) {
-        const refreshToken = event.cookies.get("refreshToken");
+	let response = await fetch(newRequest);
 
-        if (refreshToken) {
-            try {
-                const refreshResponse = await fetch(`${VITE_BACKEND_URL}/auth/rotate-token`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${refreshToken}`
-                    },
-                });
+	// Only attempt token refresh for 401 responses when we have an accessToken
+	if (response.status === 401 && accessToken) {
+		try {
+			const refreshResponse = await fetch(`${VITE_BACKEND_URL}${endpoints.auth.rotateToken}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${accessToken}`
+				}
+			});
 
-                console.log("refreshResponse:", refreshResponse);
+			if (refreshResponse.ok) {
+				const { accessToken: newAccessToken } = await refreshResponse.json();
+				event.cookies.set('accessToken', newAccessToken, {
+					path: '/',
+					httpOnly: true,
+					sameSite: 'lax',
+					secure: false,
+					maxAge: 300
+				});
 
-                if (refreshResponse.ok) {
-                    const { accessToken: newAccessToken } = await refreshResponse.json();
-                    event.cookies.set("accessToken", newAccessToken, {
-                        path: '/',
-                        httpOnly: true,
-                        sameSite: "lax",
-                        secure: false,
-                        maxAge: 300,
-                    });
+				newRequest = new Request(request, {
+					headers: {
+						...request.headers,
+						Authorization: `Bearer ${newAccessToken}`
+					}
+				});
+				response = await fetch(newRequest);
+			} else {
+				console.error('Refresh token failed:', await refreshResponse.text());
+				event.cookies.delete('accessToken', { path: '/' });
+				event.cookies.delete('u', { path: '/' });
+			}
+		} catch (error) {
+			console.error('Token refresh error:', error);
+			event.cookies.delete('accessToken', { path: '/' });
+			event.cookies.delete('u', { path: '/' });
+		}
+	}
 
-                    newRequest = new Request(request, {
-                        headers: {
-                            ...request.headers,
-                            Authorization: `Bearer ${newAccessToken}`
-                        }
-                    });
-                    response = await fetch(newRequest);
-                } else {
-                    console.error("Refresh token failed:", refreshResponse.status, await refreshResponse.text());
-                    event.cookies.delete("accessToken", {
-                        path: '/',
-                        httpOnly: true,
-                        sameSite: "lax",
-                        secure: false,
-                        maxAge: 300,
-                    });
-                    throw new Error("Refresh token failed");
-                }
-            }
-            catch (error) {
-                console.error("Token refresh error:", error);
-                event.cookies.delete("accessToken", {
-                    path: '/',
-                    httpOnly: true,
-                    sameSite: "lax",
-                    secure: false,
-                    maxAge: 300,
-                });
-                throw new Error("Token refresh failed");
-            }
-        } else {
-            event.cookies.delete("accessToken", {
-                path: '/',
-                httpOnly: true,
-                sameSite: "lax",
-                secure: false,
-                maxAge: 300,
-            });
-            throw new Error("No refresh Token");
-        }
-    }
-    return response;
+	return response;
 };
-
 
 export const handle: Handle = async ({ event, resolve }) => {
-    let user = null;
-    const accessToken = event.cookies.get("accessToken");
-    const refreshToken = event.cookies.get("refreshToken");
-    event.locals.authenticated = false;
+	const accessToken = event.cookies.get('accessToken');
+	const userCookie = event.cookies.get('u');
 
-    const userCookie = event.cookies.get('u') as string;
+	// Initialize authentication state
+	event.locals.authenticated = false;
+	event.locals.user = null;
 
-    const refreshTokens = async () => {
-        if (!refreshToken) {
-            throw new Error("No refresh token available");
-        }
+	const refreshTokens = async () => {
+		if (!accessToken) return null;
 
-        const response = await fetch(`${VITE_BACKEND_URL}/auth/rotate-token`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${refreshToken}`
-            },
-        });
+		const response = await fetch(`${VITE_BACKEND_URL}${endpoints.auth.rotateToken}`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${accessToken}`
+			}
+		});
 
-        if (!response.ok) {
-            throw new Error("Failed to refresh tokens");
-        }
+		if (!response.ok) {
+			throw new Error('Failed to refresh tokens');
+		}
 
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken, user } = await response.json();
+		const { accessToken: newAccessToken, user } = await response.json();
 
-        event.cookies.set("accessToken", newAccessToken, {
-            path: '/',
-            httpOnly: true,
-            sameSite: "lax",
-            secure: false,
-            maxAge: 300,
-        });
+		event.cookies.set('accessToken', newAccessToken, {
+			path: '/',
+			httpOnly: true,
+			sameSite: 'lax',
+			secure: false
+		});
 
-        if (user) {
-            event.cookies.set("u", JSON.stringify(user), {
-                path: '/',
-                httpOnly: true,
-                sameSite: "lax",
-                secure: false,
-                maxAge: 86400,
-            });
-        }
+		if (user) {
+			event.cookies.set('u', JSON.stringify(user), {
+				path: '/',
+				httpOnly: true,
+				sameSite: 'lax',
+				secure: false
+			});
+			return user;
+		}
 
-        if (newRefreshToken) {
-            event.cookies.set("refreshToken", newRefreshToken, {
-                path: '/',
-                httpOnly: true,
-                sameSite: "lax",
-                secure: false,
-                maxAge: 86400,
-            });
-        }
+		return null;
+	};
 
-        return newAccessToken;
-    };
+	try {
+		if (accessToken) {
+			// Check token expiration
+			const decodedToken: { exp: number } = jwtDecode(accessToken);
+			const currentTime = Date.now() / 1000;
 
-    try {
-        if (!accessToken && refreshToken) {
-            await refreshTokens();
-            event.locals.authenticated = true;
-            if (userCookie) {
-                try {
-                    user = JSON.parse(userCookie);
-                    event.locals.user = user;
-                } catch (error) {
-                    console.error('Invalid user cookie:', error);
-                    event.cookies.delete('u', {
-                        path: '/',
-                        httpOnly: true,
-                        sameSite: "strict",
-                        secure: false
-                    });
-                }
-            }
-        }
-        else if (accessToken) {
-            const decodedToken: { exp: number; } = jwtDecode(accessToken);
-            const currentTime = Date.now() / 1000;
+			// Refresh token if it's about to expire (within 2 minutes)
+			if (decodedToken.exp - currentTime < 120) {
+				const user = await refreshTokens();
+				if (user) {
+					event.locals.user = user;
+				}
+			}
 
-            if (decodedToken.exp - currentTime < 120) {
-                await refreshTokens();
-            }
+			// Set user from cookie if available
+			if (userCookie) {
+				try {
+					event.locals.user = JSON.parse(userCookie);
+				} catch (error) {
+					console.error('Invalid user cookie:', error);
+					event.cookies.delete('u', { path: '/' });
+				}
+			}
 
-            if (userCookie) {
-                try {
-                    user = JSON.parse(userCookie);
-                    event.locals.user = user;
-                    event.locals.authenticated = true;
-                } catch (error) {
-                    console.error('Invalid user cookie:', error);
-                    event.cookies.delete('u', {
-                        path: '/',
-                        httpOnly: true,
-                        sameSite: "strict",
-                        secure: false
-                    });
-                }
-            } else {
-                event.locals.authenticated = true;
-            }
-        }
+			event.locals.authenticated = true;
+		}
+	} catch (error) {
+		console.error('Authentication error:', error);
+		event.cookies.delete('accessToken', { path: '/' });
+		event.cookies.delete('u', { path: '/' });
+	}
 
-    } catch (error) {
-        console.error('Invalid user cookie or token:', error);
-        event.cookies.delete('u', {
-            path: '/',
-            httpOnly: true,
-            sameSite: "strict",
-            secure: false
-        });
-        event.cookies.delete('accessToken', {
-            path: '/',
-            httpOnly: true,
-            sameSite: "strict",
-            secure: false
-        });
-        event.cookies.delete('refreshToken', {
-            path: '/',
-            httpOnly: true,
-            sameSite: "strict",
-            secure: false
-        });
+	// Handle route protection
+	const routeId = event.route.id;
 
-        if (event.url.pathname !== '/signin') {
-            throw redirect(302, '/signin');
-        }
-        return await resolve(event);
-    }
+	// Only check authentication for routes under /(auth)
+	if (routeId?.startsWith('/(auth)')) {
+		if (!event.locals.authenticated) {
+			throw redirect(302, '/signin');
+		}
+	}
 
-    if (event.locals.authenticated && (event.url.pathname === '/signin' || event.url.pathname === '/register')) {
-        throw redirect(303, '/');
-    }
+	// Redirect authenticated users away from auth pages
+	if (
+		event.locals.authenticated &&
+		(event.url.pathname === '/signin' || event.url.pathname === '/register')
+	) {
+		throw redirect(303, '/');
+	}
 
-    const routeId = event.route.id;
-    if (routeId?.startsWith("/(auth)")) {
-        if (!event.locals.authenticated) {
-            if (event.url.pathname !== '/signin') {
-                throw redirect(302, '/signin');
-            }
-        }
-    }
+	const response = await resolve(event);
 
-    const response = await resolve(event);
+	if (routeId?.startsWith('/(auth)')) {
+		response.headers.set('X-Auth-Check', 'required');
+	}
 
-    // if (response.status === 401) {
-    //     throw error(401, 'Unauthorized access');
-    // }
-
-    if (routeId?.startsWith("/(auth)")) {
-        response.headers.set('X-Auth-Check', 'required');
-    }
-
-    return response;
+	return response;
 };
-
-// export const handle: Handle = async ({ event, resolve }) => {
-//     let user = null;
-//     const accessToken = event.cookies.get("accessToken");
-//     event.locals.authenticated = false;
-
-//     const userCookie = event.cookies.get('u') as string;
-
-//     if (accessToken) {
-//         try {
-//             user = JSON.parse(userCookie);
-//             event.locals.user = user;
-//             event.locals.authenticated = true;
-//         } catch (error) {
-//             console.error('Invalid user cookie:', error);
-//             event.cookies.delete('u', {
-//                 path: '/',
-//                 httpOnly: true,
-//                 sameSite: "strict",
-//                 secure: false
-//             });
-//         }
-//     }
-
-//     if (accessToken && (event.url.pathname === '/signin' || event.url.pathname === '/register')) {
-//         throw redirect(303, '/');
-//     }
-
-//     const routeId = event.route.id;
-//     if (routeId?.startsWith("/(auth)")) {
-//         if (!event.locals.authenticated) {
-//             throw redirect(302, '/signin');
-//         }
-//     }
-
-//     const response = await resolve(event);
-
-//     if (routeId?.startsWith("/(auth)")) {
-//         response.headers.set('X-Auth-Check', 'required');
-//     }
-
-//     return response;
-// };
