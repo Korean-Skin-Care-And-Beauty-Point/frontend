@@ -1,0 +1,13 @@
+services:
+  frontend-korean:
+    build:
+      context: .
+      # args:
+      #   - VITE_BACKEND_URL=${VITE_BACKEND_URL}
+    container_name: korean-skin-care-frontend
+    # environment:
+    #   - VITE_BACKEND_URL="https://api.koreanskincareandclinic.com/api"
+    env_file:
+      - ./.env
+    ports:
+      - 3002:3000
