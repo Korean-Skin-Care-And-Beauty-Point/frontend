@@ -1,7 +1,7 @@
 FROM node:24-alpine3.21 AS builder
 WORKDIR /app
 COPY package*.json ./
-RUN bun i
+RUN npm i
 COPY . .
 # ARG VITE_BACKEND_URL
 # ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
