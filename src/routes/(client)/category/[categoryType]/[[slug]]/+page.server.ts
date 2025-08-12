@@ -3,16 +3,16 @@ import { endpoints } from '$lib/utils/api';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ fetch, params, url }) => {
-	const categoryId = params.categoryType === 'search' ? '' : params.categoryType;
-	const searchQuery = url.searchParams.get('search') || '*';
+	const categoryId = params.categoryType === 'q' ? '' : params.slug;
+	const searchQuery = url.searchParams.get('q') || '';
 
-	const knownParams = ['search', 'categories', 'sort_by', 'page', 'per_page'];
+	const knownParams = ['q', 'category', 'sort_by', 'page', 'per_page'];
 
 	const backendParams = new URLSearchParams();
-	backendParams.set('search', searchQuery);
+	backendParams.set('q', searchQuery);
 
 	if (categoryId) {
-		backendParams.set('categories', categoryId);
+		backendParams.set('category', categoryId);
 	}
 
 	url.searchParams.forEach((value, key) => {
@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({ fetch, params, url }) => {
 	if (page) backendParams.set('page', page);
 	if (perPage) backendParams.set('per_page', perPage);
 
-	console.log(backendParams);
+	// console.log(backendParams);
 
 	try {
 		const productCategory = await fetch(
@@ -43,13 +43,13 @@ export const load: PageServerLoad = async ({ fetch, params, url }) => {
 			}
 		);
 
-		const response = await productCategory.text();
+		// const response = await productCategory.text();
 
-		console.log(response);
+		// console.log(response);
 
 		return {
 			status: 'success',
-			productCategory: response
+			productCategory: productCategory.json()
 		};
 	} catch (err) {
 		return {

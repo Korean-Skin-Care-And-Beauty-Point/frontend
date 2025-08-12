@@ -6,6 +6,7 @@ export const endpoints = {
 		googleCallback: '/auth/google/redirect'
 	},
 	profile: {
+		celebrity: '/user/celebrity',
 		user: '/profile/me',
 		updateProfile: '/profile/me/edit',
 		wishlist: '/protected/products/wishlist',

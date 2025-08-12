@@ -37,7 +37,7 @@
 				alt={productTitle}
 				class="aspect-square h-full w-full {flashSale
 					? '!rounded-b-md rounded-t-full'
-					: 'rounded-md'} object-contain object-center"
+					: 'rounded-md'} object-cover object-center"
 			/>
 			{#if discount}
 				<p

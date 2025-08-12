@@ -6,7 +6,7 @@
 </script>
 
 <div
-	class="swiper !mx-auto max-w-[1450px] overflow-clip max-xl:px-4"
+	class="swiper !mx-auto overflow-clip"
 	use:swiper={{
 		slidesPerView: 1,
 		spaceBetween: 20,
@@ -20,7 +20,7 @@
 >
 	<div class="swiper-wrapper w-full">
 		{#await bannerImage}
-			<Skeleton class="aspect-[16/6] h-full w-full rounded-xl bg-gray-200" />
+			<Skeleton class="aspect-[16/6] h-full w-full bg-gray-200" />
 		{:then banners}
 			{#if banners?.banners?.length > 0}
 				{#each banners?.banners as banner (banner.id)}
@@ -29,7 +29,7 @@
 							<img
 								src={banner?.image}
 								alt="Slider"
-								class="aspect-[16/6] h-full !w-full rounded-xl object-cover object-center max-sm:aspect-video"
+								class="mx-auto aspect-[16/6] h-full !w-full max-w-screen-2xl object-cover object-center max-sm:aspect-video"
 							/>
 						</a>
 					</div>

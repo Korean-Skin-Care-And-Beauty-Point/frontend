@@ -33,8 +33,6 @@ export const actions: Actions = {
 
 			const data = await response.json();
 
-			console.log(data);
-
 			cookies.set('accessToken', data?.access_token, {
 				path: '/',
 				httpOnly: true,

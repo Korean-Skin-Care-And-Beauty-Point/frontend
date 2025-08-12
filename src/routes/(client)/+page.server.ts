@@ -24,11 +24,11 @@ export const load: PageServerLoad = async ({ fetch }) => {
 			}
 		});
 
-		// const celebrityProduct = await fetch(`${VITE_BACKEND_URL}${endpoints.product.celebrity}`, {
-		//     headers: {
-		//         "Content-Type": "application/json"
-		//     }
-		// });
+		const celebrity = await fetch(`${VITE_BACKEND_URL}${endpoints.profile.celebrity}`, {
+			headers: {
+				Accept: 'application/json'
+			}
+		});
 
 		// const recommended = await fetch(`${VITE_BACKEND_URL}${endpoints.product.recommended}`, {
 		//     headers: {
@@ -46,8 +46,8 @@ export const load: PageServerLoad = async ({ fetch }) => {
 			status: 'success',
 			banner: banner.json(),
 			newArrival: newArrivals.json(),
-			trending: trendingProduct.json()
-			// celebrity: celebrityProduct.json(),
+			trending: trendingProduct.json(),
+			celebrity: celebrity.json()
 			// recommended: recommended.json(),
 			// flashSale: flashSale.json()
 		};

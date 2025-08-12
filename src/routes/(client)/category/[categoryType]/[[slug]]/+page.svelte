@@ -6,38 +6,38 @@
 	import { ListFilter } from 'lucide-svelte';
 	import { pageTitle } from '$lib/store/pageTitle.svelte.js';
 	import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
+	import * as Pagination from '$lib/components/ui/pagination/index.js';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 
-	// type AttributeValue = {
-	// 	value: string;
-	// 	count: number;
-	// 	checked: boolean;
-	// };
-
-	// type Attribute = {
-	// 	title: string;
-	// 	values: AttributeValue[];
-	// };
-
 	const { data } = $props();
+
 	// let selectedAttributes: Record<string, string[]> = $state({});
 	let selectedFilters: Record<string, Set<string>> = $state({});
+	let originalFilters: { title: string; values: { value: string }[] }[] = $state([]);
+	let currentFilters: { title: string; values: { value: string }[] }[] = $state([]);
 
-	$inspect(page.url.searchParams.get('search'));
+	// $inspect(page.url.searchParams.get('search'));
+
+	let initialUrlParams = $state(new URLSearchParams());
+
+	$effect(() => {
+		// Store initial URL params before any filtering
+		if (Object.keys(selectedFilters).length === 0) {
+			initialUrlParams = new URLSearchParams(page.url.search);
+		}
+	});
 
 	$effect(() => {
 		const params = new URLSearchParams(page.url.search);
 		const newFilters: Record<string, Set<string>> = {};
 
-		// Initialize filters based on API response if available
 		data?.productCategory?.then((category) => {
-			if (category?.attributes) {
-				category.attributes.forEach((attr: { title: string }) => {
-					const filterKey = attr.title.toLowerCase();
-					if (!newFilters[filterKey]) {
-						newFilters[filterKey] = new Set();
-					}
+			console.log(category);
+			if (category?.filters?.attributes) {
+				category.filters.attributes.forEach((attr: { title: string }) => {
+					originalFilters = category.filters.attributes;
+					currentFilters = category.filters.attributes;
 				});
 			}
 		});
@@ -48,28 +48,36 @@
 			if (!newFilters[filterKey]) {
 				newFilters[filterKey] = new Set();
 			}
-			newFilters[filterKey].add(value);
+			newFilters[filterKey].add(value.toString());
 		});
 
 		selectedFilters = newFilters;
 	});
 
-	function handleCheckboxChange(filterType: string, value: string, checked: boolean) {
-		// Create a new Set to trigger reactivity
+	function handleCheckboxChange(filterType: string, value: string | number, checked: boolean) {
 		const newFilters = { ...selectedFilters };
-		const filterKey = filterType.toLowerCase();
 
-		// Initialize the filter if it doesn't exist
-		if (!newFilters[filterKey]) {
-			newFilters[filterKey] = new Set();
+		if (!newFilters[filterType]) {
+			newFilters[filterType] = new Set();
 		} else {
-			newFilters[filterKey] = new Set(newFilters[filterKey]);
+			newFilters[filterType] = new Set(newFilters[filterType]);
 		}
 
 		if (checked) {
-			newFilters[filterKey].add(value);
+			newFilters[filterType].add(value.toString());
 		} else {
-			newFilters[filterKey].delete(value);
+			newFilters[filterType].delete(value.toString());
+		}
+
+		if (newFilters[filterType].size === 0) {
+			delete newFilters[filterType];
+			goto(`?${initialUrlParams.toString()}`, {
+				keepFocus: true,
+				noScroll: true,
+				replaceState: true,
+				invalidateAll: true
+			});
+			return;
 		}
 
 		selectedFilters = newFilters;
@@ -79,16 +87,14 @@
 	function updateUrlParams() {
 		const params = new URLSearchParams();
 
-		// Add all active filters to URL
 		for (const [filterKey, values] of Object.entries(selectedFilters)) {
 			values.forEach((value) => {
 				params.append(filterKey, value);
 			});
 		}
 
-		// Preserve search and category params
-		if (page.url.searchParams.get('search')) {
-			params.set('search', page.url.searchParams.get('search')!);
+		if (page.url.searchParams.get('q')) {
+			params.set('q', page.url.searchParams.get('q')!);
 		}
 		if (page.url.searchParams.get('categories')) {
 			params.set('categories', page.url.searchParams.get('categories')!);
@@ -102,53 +108,31 @@
 		});
 	}
 
-	function isChecked(filterType: string, value: string): boolean {
-		const filterKey = filterType.toLowerCase();
-		return selectedFilters[filterKey]?.has(value) || false;
+	function isChecked(filterType: string, value: { value: { id: string } }): boolean {
+		// const filterKey = 'attributes[]';
+		return selectedFilters[filterType]?.has(value.toString()) || false;
 	}
-
+	function clearAllFilters() {
+		selectedFilters = {};
+		goto(`?${initialUrlParams.toString()}`, {
+			keepFocus: true,
+			noScroll: true,
+			replaceState: true,
+			invalidateAll: true
+		});
+	}
 	$effect(() => {
 		data?.productCategory
 			?.then(
-				(e) => (
-					($pageTitle.title = page.url.searchParams.get('search')
-						? e?.product?.request_params.q
-						: page.url.searchParams.get('search') === ''
+				(e) =>
+					($pageTitle.title = page.url.searchParams.get('q')
+						? e?.query
+						: page.url.searchParams.get('q') === ''
 							? 'All'
-							: e?.product?.hits[0]?.document?.ProductCategory[0]?.category?.title),
-					console.log(e)
-				)
+							: e?.product?.hits[0]?.document?.ProductCategory[0]?.category?.title)
 			)
 			.catch((e) => console.log(e));
 	});
-
-	// function handleCheckboxChange(filterType: string, title: string, checked: boolean) {
-	// 	if (checked) {
-	// 		selectedFilters[filterType].push(title);
-	// 	} else {
-	// 		selectedFilters[filterType] = selectedFilters[filterType].filter(
-	// 			(item: string) => item !== title
-	// 		);
-	// 	}
-	// 	updateUrlParams();
-	// }
-
-	// function updateUrlParams() {
-	// 	const params = new URLSearchParams();
-	// 	for (const filterType in selectedFilters) {
-	// 		if (selectedFilters[filterType].length > 0) {
-	// 			selectedFilters[filterType].forEach((value: string) => {
-	// 				params.append(filterType.toLowerCase(), value);
-	// 			});
-	// 		}
-	// 	}
-	// 	goto(`?${params.toString()}`, {
-	// 		keepFocus: true,
-	// 		noScroll: true,
-	// 		replaceState: true,
-	// 		invalidateAll: true
-	// 	});
-	// }
 </script>
 
 <div class="mx-auto mb-16 flex w-full max-w-screen-2xl flex-col gap-8 px-12 max-md:px-4">
@@ -164,15 +148,44 @@
 		<div
 			class="col-span-2 flex h-auto w-full flex-col gap-4 rounded-lg border border-gray-200 px-4 py-4 max-lg:hidden"
 		>
-			<div>
+			<div class="flex items-center justify-between">
+				<p class="text-xl font-semibold tracking-tight">Filter Options</p>
+			</div>
+			<div class="flex flex-col gap-6">
+				{#each originalFilters as attribute}
+					<div class="flex flex-col gap-2.5">
+						<p class="text-sm font-semibold">{attribute.title}</p>
+						<ul class="flex flex-col gap-1.5">
+							{#each attribute.values as value, index}
+								<li class="flex items-center gap-2">
+									<Checkbox
+										id={`${attribute.title}-${index}`}
+										checked={isChecked('attributes[]', value.id)}
+										onCheckedChange={(e) => handleCheckboxChange('attributes[]', value.id, e)}
+									/>
+									<!-- disabled={!currentFilters.some(
+											(f) =>
+												f.title === attribute.title && f.values.some((v) => v.value === value.id)
+										)} -->
+									<p class="text-sm">{value.value}</p>
+									{#if !currentFilters.some((f) => f.title === attribute.title && f.values.some((v) => v.value === value.value))}
+										<span class="text-xs text-gray-400">(0)</span>
+									{/if}
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/each}
+			</div>
+			<!-- <div>
 				<p class="text-xl font-semibold tracking-tight">Filter Options</p>
 			</div>
 			<div class="flex flex-col gap-6">
 				{#await data?.productCategory}
 					<div></div>
 				{:then category}
-					{#if category?.attributes.length > 0}
-						{#each category?.attributes as attribute}
+					{#if category?.filters?.attributes.length > 0}
+						{#each category?.filters?.attributes as attribute}
 							<div class="flex flex-col gap-2.5">
 								<p class="text-base font-semibold">{attribute.title}</p>
 								<ul class="flex flex-col gap-1.5">
@@ -180,9 +193,9 @@
 										<li class="flex items-center gap-2">
 											<Checkbox
 												id={`${attribute.title}-${index}`}
-												checked={isChecked(attribute.title, value.value)}
+												checked={isChecked(attribute.title, value.id)}
 												onCheckedChange={(e) => {
-													handleCheckboxChange(attribute.title, value.value, e);
+													handleCheckboxChange(attribute.title, value.id, e);
 												}}
 											/>
 											<p class="text-sm">{value.value}</p>
@@ -193,7 +206,7 @@
 						{/each}
 					{/if}
 				{/await}
-			</div>
+			</div> -->
 		</div>
 
 		<div class="col-span-full w-full lg:hidden">
@@ -209,7 +222,7 @@
 						{:then category}
 							{#if category?.attributes.length > 0}
 								{#each category?.attributes as attribute}
-									<Sheet.Title class="text-start">{attribute.title}</Sheet.Title>
+									<Sheet.Title class="text-start font-normal">{attribute.title}</Sheet.Title>
 									<Sheet.Description>
 										<ul class="flex flex-col gap-1.5">
 											{#each attribute?.values as value}
@@ -233,13 +246,17 @@
 				{#await data?.productCategory}
 					<Skeleton class="h-4 w-64 bg-gray-200" />
 				{:then category}
-					<p class="max-md:text-sm">
-						{category?.product?.found} items found for "{page.url.searchParams.get('search')
-							? category?.product?.request_params.q
-							: page.url.searchParams.get('search') === ''
-								? 'All'
-								: category?.product?.hits[0]?.document?.ProductCategory[0]?.category?.title}"
-					</p>
+					{#if category?.products.length > 0}
+						<p class="max-md:text-sm">
+							{category?.pagination.total_items} items found for "{page.url.searchParams.get('q')
+								? category?.query || page.url.searchParams.get('q')
+								: page.url.searchParams.get('q') === ''
+									? 'All'
+									: page.params.slug.replaceAll('-', ' ')} "
+						</p>
+					{:else}
+						<p>0 items found for "{page.url.searchParams.get('q')}"</p>
+					{/if}
 				{/await}
 			</div>
 			<div
@@ -250,17 +267,17 @@
 						<Skeleton class="aspect-[4/5] h-full w-full bg-gray-200" />
 					{/each}
 				{:then category}
-					{#if category?.product?.hits.length > 0}
-						{#each category?.product.hits as product}
+					{#if category?.products.length > 0}
+						{#each category?.products as product}
 							<ProductCard
-								imgUrl={`${category.baseUrl}/${product.document.image}`}
-								productPrice={product?.document?.price}
-								productTitle={product?.document?.name}
-								rating={product?.averageReview}
-								discount={product?.document?.discount}
-								productRedirectLink={`/product/${product?.document?.id}/${product?.document?.slug}`}
-								totalReviewCount={product?.totalReviewCount}
+								imgUrl={product.image}
+								productPrice={product?.price}
+								productTitle={product?.name}
+								productRedirectLink={`/product/${product?.id}/${product?.slug}`}
 							/>
+							<!-- rating={product?.averageReview}
+								discount={product?.document?.discount}
+								totalReviewCount={product?.totalReviewCount} -->
 						{/each}
 					{:else}
 						<div class="col-span-full flex h-full w-full items-center justify-center">
@@ -269,6 +286,38 @@
 					{/if}
 				{/await}
 			</div>
+
+			{#await data?.productCategory then category}
+				<Pagination.Root
+					count={category?.pagination.total_items}
+					perPage={category?.pagination?.per_page}
+					class="col-start-4 items-end"
+				>
+					{#snippet children({ pages, currentPage })}
+						<Pagination.Content>
+							<Pagination.Item>
+								<Pagination.PrevButton />
+							</Pagination.Item>
+							{#each pages as page (page.key)}
+								{#if page.type === 'ellipsis'}
+									<Pagination.Item>
+										<Pagination.Ellipsis />
+									</Pagination.Item>
+								{:else}
+									<Pagination.Item isVisible={currentPage === page.value}>
+										<Pagination.Link {page} isActive={currentPage === page.value}>
+											{page.value}
+										</Pagination.Link>
+									</Pagination.Item>
+								{/if}
+							{/each}
+							<Pagination.Item>
+								<Pagination.NextButton />
+							</Pagination.Item>
+						</Pagination.Content>
+					{/snippet}
+				</Pagination.Root>
+			{/await}
 		</div>
 	</div>
 </div>

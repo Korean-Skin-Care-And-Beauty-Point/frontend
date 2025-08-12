@@ -15,6 +15,7 @@
 	import provinces from '$lib/lists/provinceList';
 	import { enhance } from '$app/forms';
 	import { toast } from 'svelte-sonner';
+	import { goto } from '$app/navigation';
 
 	let hidePassword = $state(true);
 	let isLoading = $state(false);
@@ -57,6 +58,9 @@
 		if (form?.status === 'success') {
 			isLoading = false;
 			toast.success(form?.message);
+			goto('/', {
+				invalidateAll: true
+			});
 		} else if (form?.status === 'error') {
 			isLoading = false;
 			toast.error(form?.message);
@@ -85,7 +89,7 @@
 			>
 				<input
 					type="text"
-					name="fullName"
+					name="name"
 					id="fullName"
 					class="w-full rounded-md py-2 text-sm focus-visible:outline-none"
 					required

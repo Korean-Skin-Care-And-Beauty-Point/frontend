@@ -52,7 +52,7 @@
 
 	function searchInput(e: Event) {
 		e.preventDefault();
-		goto(`/category/search/${searchInputText}?search=${searchInputText}`, {
+		goto(`/category/search/${searchInputText}?q=${searchInputText}`, {
 			invalidateAll: true,
 			keepFocus: false,
 			replaceState: true
@@ -60,8 +60,8 @@
 	}
 </script>
 
-<nav class="sticky top-0 z-50 bg-white py-2">
-	<div
+<nav class="sticky top-0 z-50 bg-white">
+	<!-- <div
 		class="mx-auto flex w-full max-w-screen-2xl justify-between px-10 pb-2 max-md:px-6 max-sm:hidden"
 	>
 		<div class="flex w-full items-center justify-between">
@@ -117,7 +117,7 @@
 				<a href="/help" class="text-xs text-gray-400">Help & Support</a>
 			</div>
 		</div>
-	</div>
+	</div> -->
 	<div
 		class="mx-auto flex max-w-screen-2xl items-center justify-between gap-10 border-y border-gray-200 px-10 py-4 max-lg:flex-wrap max-lg:gap-4 max-md:px-6 max-sm:border-y-0 max-sm:border-b max-sm:px-4 max-xs:gap-2"
 	>
@@ -141,8 +141,8 @@
 					>
 						<div class="flex flex-col gap-4">
 							{#await category then categoryItem}
-								{#each categoryItem as item}
-									<a href="/" class="text-nowrap">{item?.title}</a>
+								{#each categoryItem?.categories as item}
+									<a href="/category/{item?.id}/{item?.slug}" class="text-nowrap">{item?.title}</a>
 								{/each}
 							{/await}
 						</div>
@@ -234,14 +234,14 @@
 					</a>
 				{/if}
 			</div>
-			<a
+			<!-- <a
 				href="/booking"
 				class="text-nowrap rounded-md bg-primary px-5 py-3 text-sm font-semibold tracking-tight text-white max-md:px-3 max-md:py-3 max-md:text-xs max-xs:hidden"
 				>Book Appointment</a
-			>
+			> -->
 		</div>
 	</div>
-	<!-- <div
+	<div
 		class="mx-auto max-w-screen-2xl border-b border-gray-200 px-10 py-2 max-sm:hidden max-xs:px-4"
 	>
 		<div class="flex items-center gap-2 text-sm">
@@ -264,5 +264,5 @@
 				></div>
 			</div>
 		</div>
-	</div> -->
+	</div>
 </nav>
