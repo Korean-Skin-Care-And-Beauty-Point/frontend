@@ -594,23 +594,23 @@
 </div>
 
 <style>
-	:global(
+	:global {
 		input:-webkit-autofill,
 		input:-webkit-autofill:hover,
 		input:-webkit-autofill:focus,
 		input:-webkit-autofill:active,
-		input:-internal-autofill-selected
-	) {
-		background-color: transparent !important;
-		-webkit-box-shadow: 0 0 0 1000px white inset !important;
-		-webkit-text-fill-color: #000;
-	}
+		input:-internal-autofill-selected {
+			background-color: transparent !important;
+			-webkit-box-shadow: 0 0 0 1000px white inset !important;
+			-webkit-text-fill-color: #000;
+		}
 
-	input[type='number']::-webkit-outer-spin-button,
-	input[type='number']::-webkit-inner-spin-button,
-	input[type='number'] {
-		-webkit-appearance: none;
-		margin: 0;
-		-moz-appearance: textfield !important;
+		input[type='number']::-webkit-outer-spin-button,
+		input[type='number']::-webkit-inner-spin-button,
+		input[type='number'] {
+			-webkit-appearance: none;
+			margin: 0;
+			-moz-appearance: textfield !important;
+		}
 	}
 </style>

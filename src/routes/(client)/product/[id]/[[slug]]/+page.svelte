@@ -11,6 +11,7 @@
 	import malika from '$lib/assets/img/actress/malika.png';
 	import { toast } from 'svelte-sonner';
 	import { goto } from '$app/navigation';
+	import DOMPurify from 'isomorphic-dompurify';
 
 	let { data, form } = $props();
 	let thumbsSwiper = $state();
@@ -375,10 +376,18 @@
 				{#await data?.product}
 					<Skeleton class="aspect-[4/4] h-full w-full rounded-xl bg-gray-200" />
 				{:then product}
-					<Tabs.Content value="details">{product?.product?.description}</Tabs.Content>
-					<Tabs.Content value="benefits">{product?.product?.benefits}</Tabs.Content>
-					<Tabs.Content value="howtouse">{product?.product?.howToUse}</Tabs.Content>
-					<Tabs.Content value="ingredients">{product?.product?.ingredients}</Tabs.Content>
+					<Tabs.Content value="details" class="tiptap"
+						>{@html DOMPurify.sanitize(product?.product?.description)}</Tabs.Content
+					>
+					<Tabs.Content value="benefits" class="tiptap"
+						>{@html DOMPurify.sanitize(product?.product?.benefits)}</Tabs.Content
+					>
+					<Tabs.Content value="howtouse" class="tiptap"
+						>{@html DOMPurify.sanitize(product?.product?.howToUse)}</Tabs.Content
+					>
+					<Tabs.Content value="ingredients" class="tiptap"
+						>{@html DOMPurify.sanitize(product?.product?.ingredients)}</Tabs.Content
+					>
 				{/await}
 			</div>
 		</Tabs.Root>
@@ -472,5 +481,91 @@
 
 	:global(.thumbSwiper .swiper-wrapper .swiper-slide-thumb-active) {
 		opacity: 1;
+	}
+
+	:global {
+		.tiptap hr {
+			border: none;
+			border-top: 1px solid #f87171;
+			margin: 1rem 0;
+		}
+		.tiptap h1,
+		.tiptap h2,
+		.tiptap h3,
+		.tiptap h4,
+		.tiptap h5,
+		.tiptap h6 {
+			line-height: 120%;
+			margin-top: 0.1rem;
+			text-wrap: pretty;
+		}
+		.tiptap code {
+			background-color: var(--purple-light);
+			border-radius: 0.4rem;
+			color: var(--black);
+			font-size: 0.85rem;
+			padding: 0.25em 0.3em;
+		}
+
+		.tiptap pre {
+			background: var(--black);
+			border-radius: 0.5rem;
+			color: var(--white);
+			font-family: 'JetBrainsMono', monospace;
+			margin: 1.5rem 0;
+			padding: 0.75rem 1rem;
+		}
+		.tiptap pre code {
+			background: none;
+			color: inherit;
+			font-size: 0.8rem;
+			padding: 0;
+		}
+
+		.tiptap blockquote {
+			border-left: 3px solid var(--gray-3);
+			margin: 1.5rem 0;
+			padding-left: 1rem;
+		}
+		.tiptap ul {
+			list-style: disc;
+		}
+		.tiptap ol {
+			list-style: decimal;
+		}
+		.tiptap ul,
+		.tiptap ol {
+			padding: 0 1rem;
+			margin: 0.2rem 0.2rem 0.2rem 0.4rem;
+		}
+		.tiptap ul li p,
+		.tiptap ol li p {
+			margin-top: 0.2em;
+			margin-bottom: 0.2em;
+		}
+		.tiptap h1,
+		.tiptap h2 {
+			margin-top: 0.5rem;
+			font-weight: bold;
+			margin-bottom: 0.5rem;
+		}
+
+		.tiptap h1 {
+			font-size: 1.4rem;
+		}
+
+		.tiptap h2 {
+			font-size: 1.2rem;
+		}
+
+		.tiptap h3 {
+			font-size: 1.1rem;
+		}
+
+		.tiptap h4,
+		.tiptap h5,
+		.tiptaph6 {
+			font-size: 1rem;
+		}
 	}
 </style>
