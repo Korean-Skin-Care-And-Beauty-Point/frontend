@@ -40,8 +40,6 @@
 	let triggerRef = $state<HTMLButtonElement>(null!);
 	let searchInputText = $state('');
 
-	// category.then((e) => console.log(e)).catch((e) => console.log(e));
-
 	const selectedValue = $derived(languages.find((f) => f.value === value)?.label);
 	function closeAndFocusTrigger() {
 		open = false;
@@ -142,7 +140,10 @@
 						<div class="flex flex-col gap-4">
 							{#await category then categoryItem}
 								{#each categoryItem?.categories as item}
-									<a href="/category/{item?.id}/{item?.slug}" class="text-nowrap">{item?.title}</a>
+									{#if item?.status !== 'draft'}
+										<a href="/category/{item?.id}/{item?.slug}" class="text-nowrap">{item?.title}</a
+										>
+									{/if}
 								{/each}
 							{/await}
 						</div>
@@ -254,7 +255,9 @@
 					<div class="flex gap-4">
 						{#await category then categoryItem}
 							{#each categoryItem?.categories as item}
-								<a href="/category/{item?.id}/{item?.slug}" class="text-nowrap">{item?.title}</a>
+								{#if item?.status !== 'draft'}
+									<a href="/category/{item?.id}/{item?.slug}" class="text-nowrap">{item?.title}</a>
+								{/if}
 							{/each}
 						{/await}
 					</div>

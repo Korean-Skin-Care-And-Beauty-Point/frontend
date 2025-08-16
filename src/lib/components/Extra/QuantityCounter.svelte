@@ -1,12 +1,15 @@
 <script lang="ts">
 	// let quantity = $state(0);
-	let { quantity = $bindable() } = $props();
+	let { quantity = $bindable(1) } = $props();
+
+	$inspect(quantity);
 
 	$effect(() => {
 		if (!quantity || quantity < 1) {
 			quantity = 1;
 		}
 	});
+
 	function increment() {
 		quantity++;
 	}
@@ -20,9 +23,10 @@
 
 <div class="flex w-min items-center gap-1">
 	<button class="rounded-sm bg-primary px-2.5 text-lg text-white" onclick={decrement}>-</button>
+	<!-- bind:value={quantity} -->
 	<input
 		type="text"
-		bind:value={quantity}
+		value={quantity}
 		name="quantity"
 		class="h-7 w-7 rounded-md border border-gray-300 bg-white text-center"
 	/>

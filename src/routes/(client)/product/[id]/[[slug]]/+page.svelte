@@ -72,6 +72,7 @@
 	function formatRelativeTime(isoDate: string | number | Date) {
 		const now = new Date();
 		const date = new Date(isoDate);
+		//@ts-ignore
 		const diffInDays = Math.round((date - now) / (1000 * 60 * 60 * 24));
 
 		if (diffInDays === 0) return 'today';

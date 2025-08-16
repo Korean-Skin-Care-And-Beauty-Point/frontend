@@ -29,7 +29,7 @@
 	let shippingFee = $state(0);
 	let voucher = $state(0);
 	let totalPrice = $state(0);
-	let quantity = $state(0);
+	let quantities = $state.raw({});
 
 	let { data, form } = $props();
 
@@ -49,8 +49,9 @@
 			totalDiscount = selected.reduce(
 				(
 					total: number,
-					item: { discounts: string | any[]; product_price: number; quantity: number }
+					item: { discounts: string | any[]; product_price: number; id: string; quantity: number }
 				) => {
+					// const quantity = quantities[item.id] || item.quantity;
 					if (item.discounts?.length > 0) {
 						const discount = item.discounts[0];
 						const discountAmount = (discount.discount_amount / 100) * item.product_price;
@@ -64,8 +65,9 @@
 			subTotal = selected.reduce(
 				(
 					total: number,
-					item: { product_price: number; quantity: number; discounts: string | any[] }
+					item: { product_price: number; quantity: number; id: string; discounts: string | any[] }
 				) => {
+					// const quantity = quantities[item.id] || item.quantity;
 					const basePrice = item.product_price * item.quantity;
 					if (item.discounts?.length > 0) {
 						const discount = item.discounts[0];
@@ -386,7 +388,7 @@
 		</div>
 	</div>
 
-	<div class="mb-8 flex flex-col gap-6">
+	<!-- <div class="mb-8 flex flex-col gap-6">
 		<p class="mt-4 text-2xl font-bold tracking-tight">Related Products</p>
 		<div class="grid grid-cols-5 gap-4 max-sm:grid-cols-2">
 			{#each Array.from({ length: 10 })}
@@ -400,5 +402,5 @@
 				/>
 			{/each}
 		</div>
-	</div>
+	</div> -->
 </div>
