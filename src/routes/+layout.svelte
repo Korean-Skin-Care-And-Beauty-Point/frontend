@@ -11,12 +11,13 @@
 
 <svelte:head>
 	<title>
-		{$pageTitle.title || 'Koren Skin Care & Beauty Clinic'} | Best in class skin care health in town.
+		{$pageTitle.title || 'Koren Skin Care & Beauty Clinic'} | Expert Facial & Skin Treatments for Glowing
+		Skin
 	</title>
 	<meta
 		name="title"
 		content="{$pageTitle.title ||
-			'Koren Skin Care & Beauty Clinic'} | Best in class skin care health in town."
+			'Koren Skin Care & Beauty Clinic'} | Expert Facial & Skin Treatments for Glowing Skin"
 	/>
 	<meta name="description" content={$pageTitle.description} />
 
@@ -25,7 +26,7 @@
 	<meta
 		property="og:title"
 		content="{$pageTitle.title ||
-			'Koren Skin Care & Beauty Clinic'} | Best in class skin care health in town."
+			'Koren Skin Care & Beauty Clinic'} | Expert Facial & Skin Treatments for Glowing Skin"
 	/>
 	<meta property="og:description" content={$pageTitle.description} />
 	<meta property="og:image" content={metaImage} />
@@ -35,7 +36,7 @@
 	<meta
 		property="twitter:title"
 		content="{$pageTitle.title ||
-			'Koren Skin Care & Beauty Clinic'} | Best in class skin care health in town."
+			'Koren Skin Care & Beauty Clinic'} | Expert Facial & Skin Treatments for Glowing Skin."
 	/>
 	<meta property="twitter:description" content={$pageTitle.description} />
 	<meta property="twitter:image" content={metaImage} />
