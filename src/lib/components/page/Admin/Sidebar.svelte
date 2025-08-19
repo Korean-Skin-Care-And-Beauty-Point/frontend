@@ -52,7 +52,7 @@
 
 <div class="flex h-screen w-full flex-col gap-6 bg-primary px-4 py-4">
 	<div class="flex w-full justify-center">
-		<img src={fullLogoWhite} alt="Korean skin care and Beauty point logo" class="h-full w-44" />
+		<img src={fullLogoWhite} alt="Korean skin care and Beauty clnic logo" class="h-full w-44" />
 	</div>
 	<hr class="rounded-full border border-red-500" />
 	<div>

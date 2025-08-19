@@ -9,7 +9,7 @@
 	} from '$lib/components';
 	import Celebrity from '$lib/components/page/Home/Celebrity.svelte';
 	import { pageTitle } from '$lib/store/pageTitle.svelte';
-	$pageTitle.title = 'Korean Skin Care and Beauty Point';
+	$pageTitle.title = 'Korean Skin Care and Beauty Clinic';
 
 	let { data } = $props();
 </script>

@@ -9,26 +9,6 @@
 	let { children, data } = $props();
 </script>
 
-<svelte:head>
-	<title>
-		{$pageTitle.title || 'Koren Skin Care and Beauty Point'}
-	</title>
-	<meta name="title" content={$pageTitle.title || 'Koren Skin Care and Beauty Point'} />
-	<meta name="description" content={$pageTitle.description} />
-
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content="http://localhost:5173" />
-	<meta property="og:title" content="{$pageTitle.title || 'Koren Skin Care and Beauty Point'} " />
-	<meta property="og:description" content={$pageTitle.description} />
-	<meta property="og:image" content="https://metatags.io/images/meta-tags.png" />
-
-	<meta property="twitter:card" content="summary_large_image" />
-	<meta property="twitter:url" content="https://colthinkspace.com" />
-	<meta property="twitter:title" content={$pageTitle.title || 'Koren Skin Care and Beauty Point'} />
-	<meta property="twitter:description" content={$pageTitle.description} />
-	<meta property="twitter:image" content="https://metatags.io/images/meta-tags.png" />
-</svelte:head>
-
 {#if dev}
 	<RenderScan />
 {/if}
