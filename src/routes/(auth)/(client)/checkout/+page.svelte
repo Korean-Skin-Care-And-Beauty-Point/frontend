@@ -46,41 +46,40 @@
 
 	function calculateTotalDiscount() {
 		return $checkoutData.reduce((total: number, item: any) => {
-			if (item.product.discount > 0) {
-				const discountAmount = (item.product.discount / 100) * item.product.price;
-				return total + discountAmount * item.quantity;
-			}
-			return total;
+			// if (item.discounts.length > 0) {
+			// 	// const discountAmount = (item.product.discount / 100) * item.product.price;
+			// 	// return total + discountAmount * item.quantity;
+			// 	return total * item.quantity;
+			// }
+			return total * item.quantity;
 		}, 0);
 	}
 
 	function calculateSubtotal() {
 		return $checkoutData.reduce((total: number, item: any) => {
-			return total + item.product.price * item.quantity;
+			return total + item.product_price * item.quantity;
 		}, 0);
 	}
 	$effect(() => {
 		totalDiscount = calculateTotalDiscount();
 		subTotal = calculateSubtotal() - calculateTotalDiscount();
 		totalPrice = subTotal + shippingFee - voucher;
-		discount = $checkoutData.some(
-			(item: { product: { discount: number } }) => item.product.discount > 0
-		);
+		discount = $checkoutData.some((item) => item.discounts.length > 0);
 	});
 
 	const paymentOption = [
 		{
 			title: 'Cash On Delivery',
-			value: 'COD',
+			value: 'cod',
 			icon: Banknote
 		},
 		{
 			title: 'Esewa',
-			value: 'ESEWA'
+			value: 'esewa'
 		},
 		{
 			title: 'Khalti',
-			value: 'KHALTI'
+			value: 'khalti'
 		}
 	];
 
@@ -174,41 +173,42 @@
 						<div class="flex w-full items-start gap-4 text-base max-md:gap-2">
 							<div>
 								<img
-									src={item?.product?.image}
-									alt={item?.product?.name}
+									src={item?.product_image}
+									alt={item?.product_name}
 									class="aspect-square h-full w-16 rounded-md object-contain object-center"
 								/>
 							</div>
 							<div class="flex w-full items-start justify-between">
 								<div class="flex flex-col gap-0 max-md:gap-0">
 									<p class="line-clamp-2 text-xl font-semibold max-md:text-sm">
-										{item?.product?.name}
+										{item?.product_name}
 									</p>
 									<div class="flex items-center gap-1.5">
-										{#each JSON.parse(item?.attributes) as attribute}
+										{#each item?.attributes as attribute}
 											<p class="text-xs font-normal text-gray-400">
-												{attribute.title} <span>:</span> <span>{attribute.value}</span>
+												{attribute.attribute_name} <span>:</span>
+												<span>{attribute.attribute_value}</span>
 											</p>
 										{/each}
 									</div>
 								</div>
 								<div class="flex flex-col items-end gap-0 max-md:items-start">
-									<p class="text-lg font-semibold tracking-tight text-primary max-md:text-base">
+									<!-- <p class="text-lg font-semibold tracking-tight text-primary max-md:text-base">
 										{price
 											.format(
 												discount
-													? item?.product?.price -
-															(item?.product?.discount / 100) * item?.product?.price
+													? item?.product_price -
+															(item?.discounts / 100) * item?.product?.price
 													: item?.product?.price
 											)
 											.replace('NPR', 'Rs.')}
-									</p>
+									</p> -->
 									{#if discount}
 										<div class="flex items-end gap-0">
 											<p
 												class="text-base font-medium tracking-tight text-red-200 line-through max-md:text-sm"
 											>
-												{price.format(item?.product?.price).replace('NPR', 'Rs.')}
+												{price.format(item?.product_price).replace('NPR', 'Rs.')}
 											</p>
 										</div>
 									{/if}

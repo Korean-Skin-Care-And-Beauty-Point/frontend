@@ -93,7 +93,9 @@
 				totalProduct = e.cart.items.length;
 				deleteSelected = [...e.cart.items];
 
-				discount = e.product.some((item: { discounts: Array<any> }) => item.discounts.length > 0);
+				discount = e.carts.items.some(
+					(item: { discounts: Array<any> }) => item.discounts.length > 0
+				);
 				updateTotals();
 			})
 			.catch((e) => console.log(e));
@@ -138,6 +140,7 @@
 
 	function proceedToCheckout() {
 		if (selected.length > 0) {
+			console.log(selected);
 			checkoutData.set(selected);
 			goto('/checkout');
 		} else {
