@@ -15,6 +15,7 @@
 </script>
 
 <div>
+	<h1 class="hidden">Korean Skin Care & Beauty Clinic</h1>
 	<HeroSlider bannerImage={data?.banner} />
 	{#await data?.celebrity then celebrity}
 		{#if celebrity?.users.length > 0}

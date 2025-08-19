@@ -26,7 +26,7 @@
 	class="mx-auto flex max-w-screen-2xl flex-col gap-6 bg-primary/10 px-10 py-10 max-sm:gap-2 max-sm:px-4"
 >
 	<div>
-		<p class="text-2xl font-bold tracking-tight max-sm:text-xl">New Arrivals</p>
+		<h2 class="text-2xl font-bold tracking-tight max-sm:text-xl">New Arrivals</h2>
 	</div>
 	<div class="grid grid-cols-5 justify-between gap-6 max-sm:grid-cols-2 max-sm:gap-2">
 		{#await products}
