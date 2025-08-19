@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { pageTitle } from '$lib/store/pageTitle.svelte';
-	import metaImage from '$Lib/assets/img/meta.png';
+	import metaImage from '$lib/assets/img/meta.png';
 
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import { RenderScan } from 'svelte-render-scan';
