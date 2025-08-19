@@ -86,13 +86,19 @@
 		<p class="text-sm">&copy; {new Date().getFullYear()} Korean Skin Care & Beauty Clinic</p>
 		<ul class="flex items-center gap-4">
 			<li>
-				<a href="/"><SiFacebook size={16} color={'#0c0a09'} /></a>
+				<a href="https://www.facebook.com/koreanskincareclinic/"
+					><SiFacebook size={16} color={'#0c0a09'} /></a
+				>
 			</li>
 			<li>
-				<a href="/"><SiInstagram size={16} color={'#0c0a09'} /></a>
+				<a href="https://www.instagram.com/korean_skincare_nepal_/"
+					><SiInstagram size={16} color={'#0c0a09'} /></a
+				>
 			</li>
 			<li>
-				<a href="/"><SiTikTok size={16} color={'#0c0a09'} /></a>
+				<a href="https://www.tiktok.com/@koreanskincareclinic_np"
+					><SiTikTok size={16} color={'#0c0a09'} /></a
+				>
 			</li>
 		</ul>
 	</div>
