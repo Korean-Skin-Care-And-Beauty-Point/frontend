@@ -2,6 +2,8 @@
 	import '../app.css';
 	import { pageTitle } from '$lib/store/pageTitle.svelte';
 	import metaImage from '$lib/assets/img/meta.png';
+	import { page } from '$app/state';
+	console.log(page);
 
 	import { Toaster } from '$lib/components/ui/sonner/index.js';
 	import { RenderScan } from 'svelte-render-scan';
@@ -10,6 +12,8 @@
 </script>
 
 <svelte:head>
+	<link rel="canonical" href={`https://${page.url.host}${page.url.pathname}`} />
+
 	<title>
 		{$pageTitle.title || 'Koren Skin Care & Beauty Clinic'} | Expert Facial & Skin Treatments for Glowing
 		Skin
