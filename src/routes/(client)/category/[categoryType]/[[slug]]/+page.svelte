@@ -2,7 +2,6 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { ProductCard } from '$lib/components/ui/product-card';
 	import * as Sheet from '$lib/components/ui/sheet/index.js';
-	import malika from '$lib/assets/img/actress/malika.png';
 	import { ListFilter } from 'lucide-svelte';
 	import { pageTitle } from '$lib/store/pageTitle.svelte.js';
 	import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte';
@@ -33,7 +32,6 @@
 		const newFilters: Record<string, Set<string>> = {};
 
 		data?.productCategory?.then((category) => {
-			console.log(category);
 			if (category?.filters?.attributes) {
 				category.filters.attributes.forEach((attr: { title: string }) => {
 					originalFilters = category.filters.attributes;
@@ -129,7 +127,7 @@
 						? e?.query
 						: page.url.searchParams.get('q') === ''
 							? 'All'
-							: e?.product?.hits[0]?.document?.ProductCategory[0]?.category?.title)
+							: e?.filters?.categories[0].title)
 			)
 			.catch((e) => console.log(e));
 	});
